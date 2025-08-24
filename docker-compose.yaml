@@ -1,0 +1,94 @@
+
+services:
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    #network_mode: host
+    ports:
+      - 9090:9090
+    volumes:
+      - prometheus-storage:/var/lib/prometheus
+      - ./config-scripts:/etc/prometheus/config
+    command:
+      - '--config.file=/etc/prometheus/config/prometheus.yml'
+    links:
+      - switchApi
+    depends_on:
+      - switchApi
+  switchApi:
+    image: simpleswitch:latest
+    build:
+      context: "ApplicationUnderTest/SimpleApi1"
+      dockerfile: "Dockerfile"
+    ports:
+      - "9000:8080"
+      - "5001:5001"
+    
+  pg_data_wh:
+    container_name: pg_data_wh
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_DB: my_data_wh_db
+      POSTGRES_USER: my_data_wh_user
+      POSTGRES_PASSWORD: my_data_wh_pwd
+    ports:
+      - "5488:5432"
+    volumes:
+      - pg_data_wh:/var/lib/postgresql/data
+  pg_grafana:
+    container_name: pg_grafana
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_DB: my_grafana_db
+      POSTGRES_USER: my_grafana_user
+      POSTGRES_PASSWORD: my_grafana_pwd
+    ports:
+      - "5499:5432"
+    volumes:
+      - pg_grafana:/var/lib/postgresql/data
+  grafana:
+    container_name: grafana
+    image: grafana/grafana:latest
+    user: "0:0"
+    environment:
+      GF_DATABASE_TYPE: postgres
+      GF_DATABASE_HOST: pg_grafana:5432
+      GF_DATABASE_NAME: my_grafana_db
+      GF_DATABASE_USER: my_grafana_user
+      GF_DATABASE_PASSWORD: my_grafana_pwd
+      GF_DATABASE_SSL_MODE: disable
+    restart: unless-stopped
+    depends_on:
+        - pg_grafana
+    links:
+      - prometheus
+    ports:
+      - 3111:3000
+    volumes:
+      - grafana:/var/lib/grafana
+      - ./provisioning:/etc/grafana/provisioning
+      
+  k6:
+    image: loadimpact/k6:latest
+    container_name: k6
+    depends_on:
+      - switchApi
+    links:
+      - switchApi
+      - pg_data_wh
+    volumes:
+      - ./k6scripts:/k6-tests
+    entrypoint: [ "k6" ]
+    command: [ "run", "/k6-tests/test1.js", "--out", "influxdb=http://pg_data_wh:8086/my_data_wh_db" ]      
+volumes:
+  pg_grafana:
+    driver: local
+  grafana:
+    driver: local
+  pg_data_wh:
+    driver: local
+  prometheus-storage:
+    driver: local
+  

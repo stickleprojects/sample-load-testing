@@ -1,0 +1,19 @@
+[
+  {
+    "id": 1,
+    "uid": "cevyn8xwabcw0c",
+    "orgId": 1,
+    "name": "prometheus",
+    "type": "prometheus",
+    "typeName": "Prometheus",
+    "typeLogoUrl": "public/plugins/prometheus/img/prometheus_logo.svg",
+    "access": "proxy",
+    "url": "http://prometheus:9090",
+    "user": "",
+    "database": "",
+    "basicAuth": false,
+    "isDefault": true,
+    "jsonData": { "pdcInjected": false },
+    "readOnly": false
+  }
+]
