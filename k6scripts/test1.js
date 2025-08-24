@@ -13,4 +13,8 @@ export default function () {
   const res = http.get("http://switchApi:8080/");
   check(res, { "status was 200": (r) => r.status == 200 });
   sleep(1);
+
+  const res2 = http.get("http://switchApi:8080/weatherforecast");
+  check(res2, { "status was 200": (r) => r.status == 200 });
+  sleep(1);
 }

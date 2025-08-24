@@ -16,7 +16,8 @@ builder.Services.AddOpenTelemetry()
       .WithTracing(tracing => tracing
           .AddAspNetCoreInstrumentation()
 
-          .AddConsoleExporter())
+          //.AddConsoleExporter()
+          )
       .WithMetrics(metrics => metrics
           .AddAspNetCoreInstrumentation()
           .AddPrometheusExporter()
@@ -30,7 +31,8 @@ builder.Services.AddOpenTelemetry()
                         "System.Net.Sockets");
             })
             .AddMeter("Microsoft.AspNetCore.Hosting", "Microsoft.AspNetCore.Server.Kestrel")
-          .AddConsoleExporter());
+          //.AddConsoleExporter()
+          );
 
 var app = builder.Build();
 
@@ -62,7 +64,11 @@ app.MapGet("/weatherforecast", () =>
     return forecast;
 })
 .WithName("GetWeatherForecast");
-app.MapGet("/", () => "Hello World!");
+app.MapGet("/", () =>
+{
+    Thread.Sleep(Random.Shared.Next(50, 200));
+    return "Hello World!";
+});
 
 app.Run();
 

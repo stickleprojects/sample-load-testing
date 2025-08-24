@@ -24,18 +24,6 @@ services:
       - "9000:8080"
       - "5001:5001"
     
-  pg_data_wh:
-    container_name: pg_data_wh
-    image: postgres:15
-    restart: always
-    environment:
-      POSTGRES_DB: my_data_wh_db
-      POSTGRES_USER: my_data_wh_user
-      POSTGRES_PASSWORD: my_data_wh_pwd
-    ports:
-      - "5488:5432"
-    volumes:
-      - pg_data_wh:/var/lib/postgresql/data
   pg_grafana:
     container_name: pg_grafana
     image: postgres:15
@@ -64,24 +52,38 @@ services:
         - pg_grafana
     links:
       - prometheus
+      - influxdb
     ports:
       - 3111:3000
     volumes:
       - grafana:/var/lib/grafana
-      - ./provisioning:/etc/grafana/provisioning
-      
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+  influxdb:
+    image: influxdb:1.8
+    
+    ports:
+      - "8086:8086"
+    environment:
+      - INFLUXDB_DB=k6
   k6:
     image: loadimpact/k6:latest
     container_name: k6
+    expose:
+      - 5665:5665
     depends_on:
       - switchApi
     links:
       - switchApi
-      - pg_data_wh
+      - influxdb
+    #environment:
+      # k6 only outputs to one destination, so cannot get results in influxdb and see them in the web dashboard at the same time
+      # To use the web dashboard, uncomment the line below and comment out the --out influxdb part in the command section
+      # - K6_WEB_DASHBOARD=true
     volumes:
       - ./k6scripts:/k6-tests
     entrypoint: [ "k6" ]
-    command: [ "run", "/k6-tests/test1.js", "--out", "influxdb=http://pg_data_wh:8086/my_data_wh_db" ]      
+    command: [ "run", "/k6-tests/test1.js", "--out", "influxdb=http://influxdb:8086/k6" ]      
 volumes:
   pg_grafana:
     driver: local

@@ -15,5 +15,14 @@
     "isDefault": true,
     "jsonData": { "pdcInjected": false },
     "readOnly": false
+  },
+  {
+    "name": "k6influxdb",
+    "type": "influxdb",
+    "uid": "cevyn8xwabcw0d",
+    "access": "proxy",
+    "database": "k6",
+    "url": "http://influxdb:8086",
+    "isDefault": false
   }
 ]

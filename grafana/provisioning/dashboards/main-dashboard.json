@@ -115,23 +115,24 @@
           "refId": "A"
         }
       ],
-      "title": "New panel",
+      "title": "Avg response time (all endpoints)",
       "type": "timeseries"
     }
   ],
   "preload": false,
+  "refresh": "5s",
   "schemaVersion": 41,
   "tags": [],
   "templating": {
     "list": []
   },
   "time": {
-    "from": "now-6h",
+    "from": "now-5m",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "browser",
   "title": "Local Perf Testing",
   "uid": "8a7805fd-f003-4db7-9b6a-8309920f0f02",
-  "version": 2
+  "version": 1
 }
