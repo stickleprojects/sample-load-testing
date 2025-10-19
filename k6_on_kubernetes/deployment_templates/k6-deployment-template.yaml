@@ -1,0 +1,11 @@
+apiVersion: k6.io/v1alpha1
+kind: TestRun
+metadata:
+  name: %metadataname%
+spec:
+  parallelism: %parallelism%
+  script:
+    configMap:
+      name: %configMapname%
+      file: %testjsfilepath%
+  arguments: "--env duration=%duration% --env rate=%rate% --env prevu=%prevu% --env maxuv=%maxuv% --env function=%functionname%"
