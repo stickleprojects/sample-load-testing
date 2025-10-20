@@ -1,6 +1,6 @@
 # Run k6 tets in kubernetes
 param(
-    [string] $testJSPath = ".\test_continuous.js",
+    [string] $testJSPath = ".\test_scripts\test.js",
     [string] $label = "k6-sample-testc",
     [string] $deploymentTemplateYamlPath = ".\deployment_templates\k6-deployment-template.yaml",
     [string] $outputFolder = ".\output",
@@ -21,11 +21,12 @@ function EmptyOutputFolder([Parameter(Mandatory = $true)][string] $folderPath) {
     
 }
 function CreateDeploymentTemplateObject() {
+    $fileName = Split-Path -Path $testJSPath -Leaf
     $parameters = [PSCustomObject]@{
         metadataname   = $label
         parallelism    = "1"
         configMapname  = $configMapName
-        testjsfilepath = $testJSPathInsideContainer
+        testjsfilepath = $fileName
         duration       = "5s"
         rate           = "100"
         prevu          = "10"
@@ -131,6 +132,8 @@ function CreateK6ConfigMap(
     }
 
     try {
+        # note we are using the relative filepath here to populate the configmap
+        # but the configmap "key" is the filename only
         $resultJson = (& kubectl create configmap $configMapName --from-file=$filePath --output json 2>&1)
         $result = $resultJson | ConvertFrom-Json
         Write-Host "ConfigMap $configMapName created successfully." -ForegroundColor Green
