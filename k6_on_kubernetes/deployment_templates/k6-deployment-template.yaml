@@ -3,9 +3,12 @@ kind: TestRun
 metadata:
   name: %metadataname%
 spec:
+# number of k6 instnances to run in parallel
   parallelism: %parallelism%
+  # the k6 script to run per instance
   script:
     configMap:
       name: %configMapname%
-      file: %testjsfilepath%
-  arguments: "--env duration=%duration% --env rate=%rate% --env prevu=%prevu% --env maxuv=%maxuv% --env function=%functionname%"
+      file: %testscriptfilename%
+  #arguments: "--env duration=%duration% --env rate=%rate% --env prevu=%prevu% --env maxuv=%maxuv% --env function=%functionname%"
+  arguments: "-e duration=2s -e rate=100 --env prevu=10 --env maxuv=20 --env function=function1"

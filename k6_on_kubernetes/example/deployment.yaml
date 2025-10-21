@@ -1,0 +1,13 @@
+apiVersion: k6.io/v1alpha1
+kind: TestRun
+metadata:
+  name: k6-sample-test
+spec:
+  # number of k6 instnances to run in parallel
+  parallelism: 4
+  # the k6 script to run per instance
+  script:
+    configMap:
+      name: k6-test
+      file: test.js
+  arguments: "-e duration=2s -e rate=100 --env prevu=10 --env maxuv=20 --env function=function1"
