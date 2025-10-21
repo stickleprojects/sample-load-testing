@@ -4,7 +4,7 @@ param(
     [string] $label = "kw1",
     [string] $deploymentTemplateYamlPath = ".\deployment_templates\k6-deployment-template.yaml",
     [string] $outputFolder = ".\output",
-    [string] $logfilepath = "$($label).log",
+    [string] $logfilepath = (join-path -path $outputFolder -childpath "$($label).log"),
     [string] $deploymentYamlPath = "$($label)_deployment.yaml",
     [string] $configMapName = "$($label)-configmap",
     [string] $namespace = "$($label)-namespace",
@@ -25,7 +25,7 @@ function CreateDeploymentTemplateObject() {
     $fileName = Split-Path -Path $testJSPath -Leaf
     $parameters = [PSCustomObject]@{
         metadataname       = $label
-        parallelism        = "1"
+        parallelism        = 5
         configMapname      = $configMapName
         testscriptfilename = $fileName
         duration           = "5s"
@@ -273,11 +273,33 @@ function WaitForAndCollectLogs(
     }
 
     # Write-Host "Collecting logs from k6 'runner' pods..."
-    # $logCollectionResult = kubectl logs -l k6_cr=$label -l runner=true | Out-File -FilePath $logFilePath -Encoding utf8
+    $logCollectionResult = kubectl logs -l k6_cr=$label -l runner=true --namespace $namespace | Out-File -FilePath $logFilePath -Encoding utf8
 
     return $true
 }
 
+function DeleteNamespace(
+    [Parameter(Mandatory = $true)][string] $namespace
+) {
+    write-host "Deleting namespace $namespace..."
+    & kubectl get namespace $namespace --output json 2>$null | Out-Null
+    if ($LASTEXITCODE -eq 0) {
+        write-host "Namespace $namespace exists. Deleting..."
+    }
+    else {
+        write-host "Namespace $namespace does not exist. Skipping deletion." -ForegroundColor Yellow
+        return $true
+    }
+    $resultText = (kubectl delete namespace $namespace 2>&1)
+    if (0 -eq $LASTEXITCODE) {
+        Write-Host "Namespace $namespace deleted successfully." -ForegroundColor Green
+        return $true
+    }
+    else {
+        Write-Error "Problem deleting namespace $namespace : " $resultText
+        return $false
+    }
+}   
 function CreateNamespaceIfNotExists(
     [Parameter(Mandatory = $true)][string] $namespace
 ) {
@@ -313,6 +335,17 @@ if ($deleteartefacts) {
     EmptyOutputFolder -folderPath $outputFolder
     $result = RemoveK6Containers -configMapName $configMapName -deploymentYamlPath $deploymentYamlPath -namespace $namespace
     
+    if (-not $result) {
+        write-host "failed to remove existing artefacts, aborting" -foregroundcolor Red
+        exit 1
+    }
+    
+    $result = DeleteNamespace -namespace $namespace
+    if (-not $result) {
+        write-host "failed to delete existing namespace, aborting" -foregroundcolor Red
+        exit 1
+    }
+
     write-host "Done" -ForegroundColor Green
 }   
 
